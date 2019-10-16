@@ -23,7 +23,11 @@ class FlaskRoutedResponse extends HttpResponseTaintSink {
 class FlaskResponseArgument extends HttpResponseTaintSink {
     FlaskResponseArgument() {
         exists(CallNode call |
-            call.getFunction().pointsTo(theFlaskReponseClass()) and
+            (
+                call.getFunction().pointsTo(theFlaskReponseClass())
+                or
+                call.getFunction().pointsTo(Value::named("flask.make_response"))
+            ) and
             call.getArg(0) = this
         )
     }
