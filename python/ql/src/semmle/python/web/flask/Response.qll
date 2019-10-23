@@ -36,3 +36,20 @@ class FlaskResponseArgument extends HttpResponseTaintSink {
 
     override string toString() { result = "flask.response.argument" }
 }
+
+class FlaskResponseTaintKind extends TaintKind {
+    FlaskResponseTaintKind() { this = "flask.Response" }
+}
+
+class FlaskResponseConfiguration extends TaintTracking::Configuration {
+    FlaskResponseConfiguration() { this = "Flask response configuration" }
+
+    override predicate isSource(DataFlow::Node node, TaintKind kind) {
+        kind instanceof FlaskResponseTaintKind and
+        (
+            node.asCfgNode().(CallNode).getFunction().pointsTo(theFlaskReponseClass())
+            or
+            node.asCfgNode().(CallNode).getFunction().pointsTo(Value::named("flask.make_response"))
+        )
+    }
+}
