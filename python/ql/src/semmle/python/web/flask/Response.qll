@@ -37,19 +37,19 @@ class FlaskResponseArgument extends HttpResponseTaintSink {
     override string toString() { result = "flask.response.argument" }
 }
 
+// see note in FlaskCookieSet for why we need this TaintKind
 class FlaskResponseTaintKind extends TaintKind {
     FlaskResponseTaintKind() { this = "flask.Response" }
 }
 
-class FlaskResponseConfiguration extends TaintTracking::Configuration {
-    FlaskResponseConfiguration() { this = "Flask response configuration" }
+class FlaskResponseSource extends TaintSource {
+    FlaskResponseSource() {
+        this.(CallNode).getFunction().pointsTo(theFlaskReponseClass())
+        or
+        this.(CallNode).getFunction().pointsTo(Value::named("flask.make_response"))
+    }
 
-    override predicate isSource(DataFlow::Node node, TaintKind kind) {
-        kind instanceof FlaskResponseTaintKind and
-        (
-            node.asCfgNode().(CallNode).getFunction().pointsTo(theFlaskReponseClass())
-            or
-            node.asCfgNode().(CallNode).getFunction().pointsTo(Value::named("flask.make_response"))
-        )
+    override predicate isSourceOf(TaintKind kind) {
+        kind instanceof FlaskResponseTaintKind
     }
 }

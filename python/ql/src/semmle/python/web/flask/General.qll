@@ -93,6 +93,9 @@ private class AsView extends TaintSource {
 
 class FlaskCookieSet extends CookieSet, CallNode {
     FlaskCookieSet() {
+        // our pointsTo analysis doesn't know that flask.make_response returns a response, so we use
+        // taint tracking to allow us to figure out if a value is a flask.Response that you can call
+        // `set_cookie_ on
         any(FlaskResponseTaintKind t).taints(this.getFunction().(AttrNode).getObject("set_cookie"))
     }
 
