@@ -48,7 +48,7 @@ private class LegacyConfiguration extends TaintTracking::Configuration {
     }
 
     private predicate isValid() {
-        not exists(TaintTracking::Configuration config | config != this)
+        any()
     }
 
     override predicate isAdditionalFlowStep(DataFlow::Node src, DataFlow::Node dest) {
