@@ -248,7 +248,7 @@ module Value {
      * * All powers of 2 (up to 2**30)
      * * Any integer explicitly mentioned in the source program.
      */
-    Value forInt(int i) {
+    NumericValue forInt(int i) {
         result.(IntObjectInternal).intValue() = i
     }
 
@@ -617,6 +617,26 @@ class StringValue extends Value {
         result = this.(BytesObjectInternal).strValue()
         or
         result = this.(UnicodeObjectInternal).strValue()
+    }
+}
+
+/** A class representing strings, either present in the source as a literal, or
+in a builtin as a value. */
+class NumericValue extends Value {
+    NumericValue() {
+        this instanceof IntObjectInternal or
+        this instanceof FloatObjectInternal
+        // TODO: Should we have a LongObjectInternal ?
+    }
+
+    /** Gets the integer-value if it is a constant integer, and it fits in a QL int */
+    int getIntValue() {
+        result = this.(IntObjectInternal).intValue()
+    }
+
+    /** Gets the float-value if it is a constant float */
+    int getFloatValue() {
+        result = this.(FloatObjectInternal).floatValue()
     }
 }
 
