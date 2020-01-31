@@ -12,7 +12,7 @@
 
 import python
 
-FunctionObject temporary_name_function(string mod, string function) {
+FunctionValue temporary_name_function(string mod, string function) {
     (
         mod = "tempfile" and function = "mktemp"
         or
@@ -23,8 +23,10 @@ FunctionObject temporary_name_function(string mod, string function) {
             function = "tempnam"
         )
     ) and
-    result = ModuleObject::named(mod).attr(function)
+    result = Module::named(mod).attr(function)
 }
+
+// TODO: I'm not entirely convinced by our example, that this is really good. Need some more investigation and references.
 
 from Call c, string mod, string function
 where temporary_name_function(mod, function).getACall().getNode() = c

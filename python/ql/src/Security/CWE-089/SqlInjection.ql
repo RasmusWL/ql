@@ -30,6 +30,7 @@ class SQLInjectionConfiguration extends TaintTracking::Configuration {
     override predicate isSink(TaintTracking::Sink sink) { sink instanceof SqlInjectionSink }
 }
 
+// TODO: Can we remove this config?
 /* Additional configuration to support tracking of DB objects. Connections, cursors, etc. */
 class DbConfiguration extends TaintTracking::Configuration {
     DbConfiguration() { this = "DB configuration" }
