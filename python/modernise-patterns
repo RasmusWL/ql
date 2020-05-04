@@ -1,0 +1,26 @@
+\(FunctionObject\)\.getFunction\(\)	(FunctionValue).getScope()
+\.getPyClass\(\)	.getScope()
+
+# -> Value::named
+ModuleObject::named\("(.*)"\).attr\("(.*)"\)	Value::named("\1.\2")
+ModuleObject::named\("(.*)"\)	Value::named("\1")
+Module::named\("(.*)"\).attr\("(.*)"\)	Value::named("\1.\2")
+
+# Object -> Value
+\bModuleObject\b	ModuleValue
+\bFunctionObject\b	FunctionValue
+\bClassObject\b	ClassValue
+\bStringObject\b	StringValue
+\bNumericObject\b	NumericValue
+\bTupleObject\b	TupleValue
+\bObject\b	Value
+
+\bPyFunctionObject\b	PythonFunctionValue
+
+\.lookupAttribute\(	.lookup(
+
+# refersTo -> pointsTo
+\.refersTo\(_, (.*), _\)	.pointsTo().getClass() = \1
+\.refersTo\((.*)\)	.pointsTo(\1)
+
+\.getASuperType\(\)	.getABaseType+()

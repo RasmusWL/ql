@@ -1,0 +1,94 @@
+#!/bin/bash
+
+set -e
+
+CURRENTDIR=$(pwd)
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PATTERNS="$SCRIPTDIR/modernise-patterns"
+
+name="$1"
+test=$(readlink -f "$2")
+files="${@:3}"
+auto_branch_name="python-modernise-$(echo $name | tr ' ' '-')"
+
+if [ -z $SEMMLE_CODE ]; then
+    echo "\$SEMMLE_CODE must be set to your 'code' repo"
+    exit 1
+fi
+
+# TODO: Understand the case syntax :D
+
+function should_run {
+    echo -n "$@? "
+    read -p "[Yn]" yn
+    case $yn in
+        [Nn]* ) /bin/false;;
+        * ) /bin/true;;
+    esac
+}
+
+function should_run_false {
+    echo -n "$@? "
+    read -p "[yN]" yn
+    case $yn in
+        [Yy]* ) /bin/true;;
+        * ) /bin/false;;
+    esac
+}
+
+for file in $files; do
+    echo $file
+done
+
+
+if should_run "new branch (${auto_branch_name})"; then
+    git checkout -b ${auto_branch_name}
+fi
+
+if should_run "auto format"; then
+    pyqlformat $files
+
+    if should_run "commit auto format"; then
+    git commit -am "Python: Autoformat ${name}"
+    fi
+fi
+
+
+if should_run "modernise (regexp replace)"; then
+    repren -p "$PATTERNS" $files
+    repren -p "$PATTERNS" $files
+    repren -p "$PATTERNS" $files
+
+    for file in $files; do
+        rm -f $file.orig
+    done
+fi
+
+if should_run "run tests on ${test}"; then
+    if [[ -d "${test}" ]]; then
+        test_folder="${test}"
+    else
+        test_folder=$(dirname "${test}")
+    fi
+
+    while :; do
+        cd $SEMMLE_CODE && ./target/jars/qltest --threads 8 "${test}" || ~/bin/qlicdiff "${test_folder}"
+        if should_run_false "accept results"; then
+            rename -f -e 's/\.actual$/.expected/' ${test_folder}/*.actual
+            break
+        fi
+    done
+fi
+
+cd "${CURRENTDIR}"
+
+if should_run "commit modernise"; then
+    git commit -am "Python: Modernise ${name}"
+fi
+
+if should_run "make pull-request"; then
+    current_branch_name=$(git rev-parse --abbrev-ref HEAD)
+    git push origin ${current_branch_name}
+    xdg-open "https://github.com/RasmusWL/ql/pull/new/${current_branch_name}"
+    git checkout master
+fi
