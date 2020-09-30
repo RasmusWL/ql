@@ -38,12 +38,28 @@ DataFlow::Node generic_os_attr(string name) {
   result = generic_os_attr(DataFlow::TypeTracker::end(), name)
 }
 
+DataFlow::Node asger_recommends(DataFlow::TypeTracker t, string name) {
+  name = "system" and
+  t.start() and
+  result.asCfgNode().(AttrNode).getObject(name) = os().asCfgNode()
+  or
+  exists(DataFlow::TypeTracker t2 | result = asger_recommends(t2, name).track(t2, t))
+}
+
+DataFlow::Node asger_recommends(string name) {
+  result = asger_recommends(DataFlow::TypeTracker::end(), name)
+}
+
 from DataFlow::Node node
 where
   // This one works fine
   // node = os::system() and
+  //
   // This one leads to massive join
   node = generic_os_attr("system") and
+  //
+  // This one also leads to massive join
+  // node = asger_recommends("system") and
   exists(node.getLocation().getFile().getRelativePath()) and
   exists(CallNode call | call.getFunction() = node.asCfgNode())
 select node.getLocation(), node
