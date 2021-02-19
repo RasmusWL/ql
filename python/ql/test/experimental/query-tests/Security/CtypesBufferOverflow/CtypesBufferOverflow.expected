@@ -1,0 +1,16 @@
+edges
+| query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:11:32:11:41 | ControlFlowNode for user_input |
+| query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:12:32:12:48 | ControlFlowNode for float() |
+| query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:14:31:14:40 | ControlFlowNode for user_input |
+| query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:15:31:15:47 | ControlFlowNode for float() |
+nodes
+| query_test.py:9:18:9:29 | ControlFlowNode for Attribute | semmle.label | ControlFlowNode for Attribute |
+| query_test.py:11:32:11:41 | ControlFlowNode for user_input | semmle.label | ControlFlowNode for user_input |
+| query_test.py:12:32:12:48 | ControlFlowNode for float() | semmle.label | ControlFlowNode for float() |
+| query_test.py:14:31:14:40 | ControlFlowNode for user_input | semmle.label | ControlFlowNode for user_input |
+| query_test.py:15:31:15:47 | ControlFlowNode for float() | semmle.label | ControlFlowNode for float() |
+#select
+| query_test.py:11:32:11:41 | ControlFlowNode for user_input | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:11:32:11:41 | ControlFlowNode for user_input | This ctypes construction depends on $@, and can therefore lead to Buffer Overflow (and possibly Remote Code Execution). | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | a user-provided value |
+| query_test.py:12:32:12:48 | ControlFlowNode for float() | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:12:32:12:48 | ControlFlowNode for float() | This ctypes construction depends on $@, and can therefore lead to Buffer Overflow (and possibly Remote Code Execution). | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | a user-provided value |
+| query_test.py:14:31:14:40 | ControlFlowNode for user_input | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:14:31:14:40 | ControlFlowNode for user_input | This ctypes construction depends on $@, and can therefore lead to Buffer Overflow (and possibly Remote Code Execution). | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | a user-provided value |
+| query_test.py:15:31:15:47 | ControlFlowNode for float() | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | query_test.py:15:31:15:47 | ControlFlowNode for float() | This ctypes construction depends on $@, and can therefore lead to Buffer Overflow (and possibly Remote Code Execution). | query_test.py:9:18:9:29 | ControlFlowNode for Attribute | a user-provided value |
