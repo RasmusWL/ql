@@ -126,6 +126,15 @@ abstract class CryptographicAlgorithm extends TCryptographicAlgorithm {
   abstract string getName();
 
   /**
+   * Holds if the name of this algorithm matches `name` modulo case,
+   * white space, dashes and underscores.
+   */
+  bindingset[name]
+  predicate matchesName(string name) {
+    name.toUpperCase().regexpReplaceAll("[-_ ]", "") = getName()
+  }
+
+  /**
    * Holds if this algorithm is weak.
    */
   abstract predicate isWeak();
