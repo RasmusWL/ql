@@ -9,6 +9,7 @@ private import semmle.python.dataflow.new.TaintTracking
 private import semmle.python.dataflow.new.RemoteFlowSources
 private import semmle.python.Concepts
 private import PEP249
+private import semmle.python.ApiGraphs
 
 /** Provides models for the Python standard library. */
 private module Stdlib {
@@ -1655,6 +1656,115 @@ private module Stdlib {
    */
   class Sqlite3 extends PEP249Module {
     Sqlite3() { this = sqlite3() }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// hashlib
+// ---------------------------------------------------------------------------
+/** Gets a call to `hashlib.new` with `algorithmName` as the first argument. */
+private DataFlow::CallCfgNode hashlibNewCall(string algorithmName) {
+  exists(DataFlow::Node nameArg |
+    result = API::moduleImport("hashlib").getMember("new").getACall() and
+    nameArg in [result.getArg(0), result.getArgByName("name")] and
+    exists(StrConst str |
+      DataFlow::exprNode(str).(DataFlow::LocalSourceNode).flowsTo(nameArg) and
+      algorithmName = str.getText()
+    )
+  )
+}
+
+/** Gets a reference to the result of calling `hashlib.new` with `algorithmName` as the first argument. */
+DataFlow::LocalSourceNode hashlibNewResult(DataFlow::TypeTracker t, string algorithmName) {
+  t.start() and
+  result = hashlibNewCall(algorithmName)
+  or
+  // Due to bad performance when using normal setup with `hashlibNewResult(t2, algorithmName).track(t2, t)`
+  // we have inlined that code and forced a join
+  exists(DataFlow::TypeTracker t2 |
+    exists(DataFlow::StepSummary summary |
+      hashlibNewResult_first_join(t2, algorithmName, result, summary) and
+      t = t2.append(summary)
+    )
+  )
+}
+
+pragma[nomagic]
+private predicate hashlibNewResult_first_join(
+  DataFlow::TypeTracker t2, string algorithmName, DataFlow::Node res, DataFlow::StepSummary summary
+) {
+  DataFlow::StepSummary::step(hashlibNewResult(t2, algorithmName), res, summary)
+}
+
+/** Gets a reference to the result of calling `hashlib.new` with `algorithmName` as the first argument. */
+DataFlow::Node hashlibNewResult(string algorithmName) {
+  hashlibNewResult(DataFlow::TypeTracker::end(), algorithmName).flowsTo(result)
+}
+
+/**
+ * A hashing operation by supplying initial data when calling the `hashlib.new` function.
+ */
+class HashlibNewCall extends Cryptography::CryptographicOperation::Range, DataFlow::CallCfgNode {
+  string hashName;
+
+  HashlibNewCall() {
+    this = hashlibNewCall(hashName) and
+    exists([this.getArg(1), this.getArgByName("data")])
+  }
+
+  override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+
+  override DataFlow::Node getAnInput() { result in [this.getArg(1), this.getArgByName("data")] }
+}
+
+/**
+ * A hashing operation by using the `update` method on the result of calling the `hashlib.new` function.
+ */
+class HashlibNewUpdateCall extends Cryptography::CryptographicOperation::Range,
+  DataFlow::CallCfgNode {
+  string hashName;
+
+  HashlibNewUpdateCall() {
+    exists(DataFlow::AttrRead attr |
+      attr.getObject() = hashlibNewResult(hashName) and
+      this.getFunction() = attr and
+      attr.getAttributeName() = "update"
+    )
+  }
+
+  override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+
+  override DataFlow::Node getAnInput() { result = this.getArg(0) }
+}
+
+/**
+ * A hashing operation from the `hashlib` package using one of the predefined functions
+ * (such as `hashlib.md5`), except for `hashlib.new` function, which is handled by
+ * `HashlibNewCall` and `HashlibNewUpdateCall`.
+ */
+class HashlibGenericHashOperation extends Cryptography::CryptographicOperation::Range,
+  DataFlow::CallCfgNode {
+  string hashName;
+
+  HashlibGenericHashOperation() {
+    not hashName = "new" and
+    exists(API::Node hashClass | hashClass = API::moduleImport("hashlib").getMember(hashName) |
+      this = hashClass.getACall() and
+      // we only want to model calls to hashlib.md5() if initial data is passed as an argument
+      exists([this.getArg(0), this.getArgByName("string")])
+      or
+      this = hashClass.getReturn().getMember("update").getACall()
+    )
+  }
+
+  override Cryptography::CryptographicAlgorithm getAlgorithm() { result.matchesName(hashName) }
+
+  override DataFlow::Node getAnInput() {
+    result = this.getArg(0)
+    or
+    // in Python 3.9, you are allowed to use `hashlib.md5(string=<bytes-like>)`.
+    // `update` method takes no keyword-arguments.
+    result = this.getArgByName("string")
   }
 }
 
